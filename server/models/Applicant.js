@@ -1,39 +1,68 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
 
-const applicantSchema = new mongoose.Schema(
+const statusHistorySchema = new mongoose.Schema(
   {
-    name: { type: String, required: [true, 'Name is required'], trim: true },
-    email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
-    },
-    password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: 6,
-      select: false,
-    },
-    phone: { type: String, trim: true },
-    headline: { type: String, trim: true }, // e.g. "MERN Stack Developer"
-    skills: [{ type: String, trim: true }],
-    experienceYears: { type: Number, default: 0, min: 0 },
-    role: { type: String, default: 'applicant', immutable: true },
+    status: { type: String, required: true },
+    changedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { _id: false },
 );
 
-applicantSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 10);
+const applicationSchema = new mongoose.Schema(
+  {
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true,
+      index: true,
+    },
+    applicant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Applicant",
+      required: true,
+      index: true,
+    },
+    coverLetter: { type: String, trim: true },
+
+    // Resume stored in S3 (Week 2). We store the KEY, not a public URL.
+    resumeKey: { type: String, required: true },
+    resumeOriginalName: { type: String },
+
+    // Kanban pipeline
+    status: {
+      type: String,
+      enum: ["Applied", "Interview", "Offered", "Rejected"],
+      default: "Applied",
+      index: true,
+    },
+    statusHistory: [statusHistorySchema],
+
+    // AI analysis (filled in Week 3)
+    aiAnalysis: {
+      state: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: "pending",
+      },
+      matchScore: { type: Number, min: 0, max: 100 },
+      summary: { type: String },
+      matchedSkills: [{ type: String }],
+      missingSkills: [{ type: String }],
+      experienceYears: { type: Number },
+      analyzedAt: { type: Date },
+    },
+  },
+  { timestamps: true },
+);
+
+// One applicant can apply to a job only once
+applicationSchema.index({ job: 1, applicant: 1 }, { unique: true });
+
+// Record the first status automatically
+applicationSchema.pre("save", function () {
+  if (this.isNew) {
+    this.statusHistory.push({ status: this.status });
+  }
 });
 
-applicantSchema.methods.matchPassword = function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
-};
-
-export default mongoose.model('Applicant', applicantSchema);
+export default mongoose.model("Application", applicationSchema);
