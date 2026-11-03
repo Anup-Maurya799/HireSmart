@@ -3,7 +3,11 @@ import Job from "../models/Job.js";
 // @route POST /api/jobs   (recruiter only)
 export const createJob = async (req, res, next) => {
   try {
-    const job = await Job.create({ ...req.body, recruiter: req.user._id });
+    const data = {};
+    UPDATABLE_FIELDS.forEach((f) => {
+      if (req.body[f] !== undefined) data[f] = req.body[f];
+    });
+    const job = await Job.create({ ...data, recruiter: req.user._id });
     res.status(201).json(job);
   } catch (error) {
     next(error);
@@ -68,6 +72,20 @@ const findOwnedJob = async (jobId, recruiterId) => {
 };
 
 // @route PUT /api/jobs/:id   (recruiter only, own job)
+const UPDATABLE_FIELDS = [
+  "title",
+  "description",
+  "location",
+  "jobType",
+  "workMode",
+  "skillsRequired",
+  "experienceMin",
+  "experienceMax",
+  "salaryMin",
+  "salaryMax",
+];
+
+// @route PUT /api/jobs/:id   (recruiter only, own job)
 export const updateJob = async (req, res, next) => {
   try {
     const { job, error, message } = await findOwnedJob(
@@ -76,7 +94,9 @@ export const updateJob = async (req, res, next) => {
     );
     if (error) return res.status(error).json({ message });
 
-    Object.assign(job, req.body);
+    UPDATABLE_FIELDS.forEach((field) => {
+      if (req.body[field] !== undefined) job[field] = req.body[field];
+    });
     await job.save();
     res.json(job);
   } catch (error) {
