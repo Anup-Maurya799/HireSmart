@@ -17,6 +17,16 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ message: messages.join(", ") });
   }
 
+  // Multer errors (file too large, unexpected field, etc.)
+  if (err.name === "MulterError") {
+    const message =
+      err.code === "LIMIT_FILE_SIZE" ? "File too large. Maximum size is 5 MB"
+      : err.code === "LIMIT_UNEXPECTED_FILE" ?
+        'Unexpected file field. Use the field name "resume"'
+      : err.message;
+    return res.status(400).json({ message });
+  }
+
   res.status(err.statusCode || 500).json({
     message: err.message || "Server error",
   });
