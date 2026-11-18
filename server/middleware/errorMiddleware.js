@@ -5,10 +5,20 @@ export const notFound = (req, res, next) => {
 export const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
 
-  // Mongoose duplicate key error (e.g. email already used)
+  // Duplicate key error
   if (err.code === 11000) {
+    if (err.keyPattern?.job && err.keyPattern?.applicant) {
+      return res
+        .status(409)
+        .json({ message: "You have already applied to this job" });
+    }
     const field = Object.keys(err.keyValue)[0];
     return res.status(400).json({ message: `${field} already in use` });
+  }
+
+  // Invalid ObjectId in the URL, e.g. /api/jobs/abc (was a 500 before)
+  if (err.name === "CastError") {
+    return res.status(400).json({ message: `Invalid ${err.path}` });
   }
 
   // Mongoose validation error
