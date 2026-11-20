@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Briefcase, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { Briefcase, LogOut, LayoutDashboard, FileText } from "lucide-react";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -37,6 +38,16 @@ const Navbar = () => {
             >
               <LayoutDashboard size={16} />
               <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+          )}
+
+          {user?.role === "applicant" && (
+            <Link
+              to="/applicant/applications"
+              className="flex items-center gap-1 text-sm font-medium text-ink hover:text-primary-dark"
+            >
+              <FileText size={16} />
+              <span className="hidden sm:inline">My Applications</span>
             </Link>
           )}
 

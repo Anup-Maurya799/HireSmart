@@ -1,12 +1,13 @@
-import { Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
-import JobBoard from './pages/JobBoard';
-import JobDetails from './pages/JobDetails';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import RecruiterDashboard from './pages/RecruiterDashboard';
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import JobBoard from "./pages/JobBoard";
+import JobDetails from "./pages/JobDetails";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import RecruiterDashboard from "./pages/RecruiterDashboard";
+import MyApplications from "./pages/MyApplications";
 
 function App() {
   return (
@@ -23,6 +24,14 @@ function App() {
           element={
             <ProtectedRoute role="recruiter">
               <RecruiterDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applicant/applications"
+          element={
+            <ProtectedRoute role="applicant">
+              <MyApplications />
             </ProtectedRoute>
           }
         />
