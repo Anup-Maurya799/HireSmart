@@ -92,3 +92,49 @@ export const getJobApplications = async (req, res, next) => {
     next(error);
   }
 };
+
+const STATUSES = ["Applied", "Interview", "Offered", "Rejected"];
+
+// @route PATCH /api/applications/:id/status   (recruiter only, must own the job)
+export const updateApplicationStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({
+        message: `Status must be one of: ${STATUSES.join(", ")}`,
+      });
+    }
+
+    const application = await Application.findById(req.params.id).populate(
+      "job",
+      "recruiter",
+    );
+    if (!application || !application.job) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // Ownership check: the recruiter must own the job this application belongs to
+    if (application.job.recruiter.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this application" });
+    }
+
+    // Only write history when the status actually changes
+    if (application.status !== status) {
+      application.status = status;
+      application.statusHistory.push({ status });
+      await application.save();
+      // Week 4: this is where we will trigger the status email
+    }
+
+    res.json({
+      _id: application._id,
+      status: application.status,
+      statusHistory: application.statusHistory,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
