@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import MyApplications from "./pages/MyApplications";
+import KanbanBoard from './pages/KanbanBoard';
 
 function App() {
   return (
@@ -32,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute role="applicant">
               <MyApplications />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/recruiter/jobs/:jobId/pipeline"
+          element={
+            <ProtectedRoute role="recruiter">
+              <KanbanBoard />
             </ProtectedRoute>
           }
         />
